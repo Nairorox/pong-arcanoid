@@ -8,6 +8,7 @@ const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 const startButton = document.querySelector('.button--start');
 const fillStyleStandard = "#000000";
+const mainWindow = document.querySelector('main');
 
 ctx.font = "30px Arial";
 
@@ -122,24 +123,48 @@ const ball = {
 		if(!game.pause){
 			this.x += this.xSpeed * game.gameSpeed;
 			this.y -= this.ySpeed * game.gameSpeed;
-			if(this.x + this.r >= canvas.width || this.x - this.r <= 0){
-				this.xSpeed = -this.xSpeed;
+			if(this.x + this.r + this.xSpeed >= canvas.width){	//right wall
+				this.xSpeed = -Math.abs(this.xSpeed);
 			}
-			if(this.y - this.r <= 0){
-				if(game.mode == 'arcanoid'){
+
+			if(this.x - this.r + this.xSpeed <= 0){	//left wall
+				this.xSpeed = Math.abs(this.xSpeed);
+			}
+
+			if(this.y - this.r <= 0 - this.ySpeed){	//if ball is above
+				this.y = 1 + this.r;
+				if(game.mode == 'arcanoid'){			//arcanoid
 					game.rebounds += 1;
 					this.ySpeed = -this.ySpeed;
 				}
-				else{
+				else{									//pong
 					player.score += 1;
 					let log = document.createElement('p');
 					log.innerText = `Lower player scored point`;
-					document.querySelector('main').appendChild(log);
+					mainWindow.appendChild(log);
 					this.ySpeed = -this.ySpeed;
 					this.y = canvas.height/2 - this.r/2;
 				}
 			}
+			//losing
+			if(this.y > canvas.height){
+				this.y = canvas.height/2 + this.r;
+				this.ySpeed = -ball.ySpeed;
+				game.rebounds = 0;
 
+				if(game.mode === 'pong'){
+					player2.score += 1;
+					let log = document.createElement('p');
+					log.innerText = `Upper player scored point`;
+					mainWindow.appendChild(log);
+				}
+			}
+		}
+	},
+	lookForPlayerRebounce: function(player){
+		if(ball.y + ball.r >= player.y && ball.y - ball.r <= player.y + player.height && ball.x + ball.r + 2 >= player.x && ball.x - ball.r - 2 <= player.x+player.width){
+			ball.xSpeed = (((ball.x - player.x)-50)/player.width)*player.rebounceRatio;
+			ball.ySpeed = -ball.ySpeed;
 		}
 	},
 
@@ -157,14 +182,11 @@ class Platform{
 		this.width = width;
 		this.height = height;
 		this.alive = true;
-		if(!this.width){
-			this.width = 50;
-			this.height = 20;
+		if(!this.width || !this.height){	//default values for platform
+			this.width = this.width || 50;
+			this.height = this.height || 20;
 		}
-		else if(!this.height){
-			this.width = 50;
-			this.height = 10;
-		}
+
 		this.color = color;
 		this.special = special;
 		game.platforms.push(this);
@@ -181,15 +203,15 @@ class Platform{
 	}
 
 	die(){
+		this.alive = false;
 		delete this;
 	}
 
 	checkBall(){
 		if(this.alive){
-			if(ball.x + ball.r >= this.x && ball.x - ball.r <= this.x + this.width && ball.y + ball.r >= this.y && ball.y + ball.r <= this.y + this.height){
-			//	ball.xSpeed = -ball.xSpeed;
+			if(ball.x + ball.r + ball.xSpeed >= this.x && ball.x - ball.r - ball.xSpeed <= this.x + this.width && ball.y + ball.r + ball.ySpeed >= this.y && ball.y + ball.r + ball.ySpeed <= this.y + this.height){
 				ball.ySpeed = -ball.ySpeed;
-				this.alive = false;
+				this.die();
 			}
 		}
 	}
@@ -218,35 +240,16 @@ const game = {
 			ctx.fillText(text, x, y);
 		}
 	},
-	//each frame
+	//refreshing each frame
 	main: function(){	//main functions
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		this.activeTexts.forEach(arrItem =>{
-			game.showSomeText(arrItem.text, arrItem.x, arrItem.y)
+		ctx.clearRect(0, 0, canvas.width, canvas.height);	//clearing screen for new frame
+		this.activeTexts.forEach(arrItem =>{	//texts
+			game.showSomeText(arrItem.text, arrItem.x, arrItem.y);
 		});
 
-		//player rebounds
-		this.players.forEach(player =>{	//player only for now 	//ball collision
-			if(ball.y + ball.r >= player.y && ball.y - ball.r <= player.y + player.height && ball.x + ball.r + 2 >= player.x && ball.x - ball.r - 2 <= player.x+player.width){
-				ball.xSpeed = (((ball.x - player.x)-50)/player.width)*player.rebounceRatio;
-				ball.ySpeed = -ball.ySpeed;
-
-				console.log('hit');
-			}
-			//losing
-			if(ball.y > canvas.height){
-				ball.y = canvas.height/2 + ball.r;
-				ball.ySpeed = -ball.ySpeed;
-				game.rebounds = 0;
-
-				if(game.mode === 'pong'){
-					player2.score += 1;
-					let log = document.createElement('p');
-					log.innerText = `Upper player scored point`;
-					document.querySelector('main').appendChild(log);
-				}
-			}
-		})
+		this.players.forEach(player =>{	//player collision with ball
+			ball.lookForPlayerRebounce(player);
+		});
 
 		player.updateMove();
 		ball.drawBall();
@@ -261,17 +264,18 @@ const game = {
 		game.platforms.forEach(platform =>{
 			platform.draw();
 			platform.checkBall();
-		})
-		//showSomeText('FajnaZabawa')
+		});
 	},
 
 	start: function(){
+		player2.x = 50;
 		canvas.style.borderTop = 'none';
 		if(this.working){
 			clearInterval(this.working);
 		}
-		//arcanoid
+		//setting arcanoid
 		if(game.mode == 'arcanoid'){
+			player2.x = 2000;	//for now
 			for(var i = 0; i < 9; i++){
 				for(var j = 0; j < 4; j++){
 					new Platform(i*55 + 5, j*25, null, null, `hsl(${i*10*j*10}, 100%, 50%)`);
@@ -279,16 +283,16 @@ const game = {
 			}
 		}
 
-		document.addEventListener('keydown', player.pressKey, false);
-		document.addEventListener('keyup', player.upKey, false);
+		document.addEventListener('keydown', player.pressKey);
+		document.addEventListener('keyup', player.upKey);
 		if(game.mode === 'pong'){
-			document.addEventListener('keydown', player2.pressKey, false);
-			document.addEventListener('keyup', player2.upKey, false);
+			document.addEventListener('keydown', player2.pressKey);
+			document.addEventListener('keyup', player2.upKey);
 		}
 		this.working = setInterval(function(){ //here comes the main part
 		game.main();
 
-		}, 1000/game.gameFps)
+		}, 1000/game.gameFps);
 	},
 
 	stop: function(){
