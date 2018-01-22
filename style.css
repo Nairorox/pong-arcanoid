@@ -1,0 +1,25 @@
+body{
+	margin:0;
+	margin-top:0;
+}
+*{
+		box-sizing: border-box;
+}
+main{
+
+	height:100vh;
+	width:100%;
+	text-align:center;
+}
+h1{
+	margin-left:auto;
+	margin-right:auto;
+}
+canvas{
+	vertical-align: middle;
+	border:solid;
+	border-bottom:none;
+	right:0;
+	left:0;
+	margin:auto;
+}
