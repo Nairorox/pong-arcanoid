@@ -12,182 +12,126 @@ const mainWindow = document.querySelector('main');
 
 ctx.font = "30px Arial";
 
-const player = {	//TODO: swap to class
-	x: 50,
-	y: 500,
-	height:10,
-	width: 100,
-	movingRight: false,
-	movingLeft: false,
-	rebounceRatio: 2,
-	score: 0,
-	draw: function(){
-		ctx.fillRect(this.x, this.y, this.width, this.height);
-	},
-	updateMove: function(){
-		if(player.movingLeft){
-			if(player.x >= 5){
-				player.x -= 5;
-			}
-			else{
-				player.x = 0;
-			}
+class Player{	//TODO: swap to class
+		constructor(x, y, height, width, rebounceRatio, leftControl, rightControl){
+			this.x =  x || 50;
+			this.y = y || 500;
+			this.height = height || 10;
+			this.width = width || 100;
+			this.movingRight = false;
+			this.movingLeft = false;
+			this.leftControl = leftControl || 'a';
+			this.rightControl = rightControl || 'd';
+			this.rebounceRatio = rebounceRatio || 2;
+			this.score = 0;
+			game.players.push(this);
 		}
-		else if(player.movingRight){
-			if(player.x + player.width <= canvas.width - 5){
-				player.x += 5;
-			}
-			else{
-				player.x = canvas.width - player.width;
-			}
+		draw(){
+			ctx.fillRect(this.x, this.y, this.width, this.height);
 		}
-	},
+		updateMove(){
+			if(this.movingLeft){
+				if(this.x >= 5){
+					this.x -= 5;
+				}
+				else{
+					this.x = 0;
+				}
+			}
+			else if(this.movingRight){
+				if(this.x + this.width <= canvas.width - 5){
+					this.x += 5;
+				}
+				else{
+					this.x = canvas.width - this.width;
+				}
+			}
+		};
 
-	pressKey: function(e){
-		if(e.key === 'd'.toLowerCase()){;
-			player.movingRight = true;
-		}
-		else if(e.key === 'a'.toLowerCase()){
-			player.movingLeft = true;
-		}
-	},
-	upKey: function(e){
-		if(e.key === 'd'.toLowerCase()){
-			player.movingRight = false;
-		}
-		if(e.key === 'a'.toLowerCase()){
-			player.movingLeft = false;
-		}
-	}
-
+		stopLeft(){
+			this.movingLeft= false;
+		};
+		stopRight(){
+			this.movingRight = false;
+		};
+		moveRight(){
+			this.movingRight = true;
+		};
+		moveLeft(){
+			this.movingLeft = true;
+		};
 }
 
-const player2 = {	//TODO: swap to class
-	x: 50,
-	y: 20,
-	height:10,
-	width: 100,
-	movingRight: false,
-	movingLeft: false,
-	rebounceRatio: 2,
-	score: 0,
-	draw: function(){
-		ctx.fillRect(this.x, this.y, this.width, this.height);
-	},
-	updateMove: function(){
-		if(this.movingLeft){
-			if(this.x >= 5){
-				this.x -= 5;
-			}
-			else{
-				this.x = 0;
-			}
-		}
-		else if(this.movingRight){
-			if(this.x + this.width <= canvas.width - 5){
-				this.x += 5;
-			}
-			else{
-				this.x = canvas.width - this.width;
-			}
-		}
-	},
-
-	pressKey: function(e){
-		if(e.key === 'ArrowRight'){;
-			player2.movingRight = true;
-		}
-		else if(e.key === 'ArrowLeft'){
-			player2.movingLeft = true;
-		}
-	},
-	upKey: function(e){
-		if(e.key === 'ArrowRight'){
-			player2.movingRight = false;
-		}
-		if(e.key === 'ArrowLeft'){
-			player2.movingLeft = false;
-		}
+class Ball{
+	constructor(x, y, r){
+		this.x = x || Math.floor(Math.random()*canvas.width-5)+5;
+		this.y = y || 100;
+		this.r = r || 5;
+		this.xSpeed = Math.random()-0.5; // between 0 && 1
+		this.ySpeed = -1;	//should be 1 / -1 
+		game.balls.push(this);
 	}
-
-}
-
-
-const ball = {
-	x:Math.floor(Math.random()*canvas.width-5)+5,
-	y:100,
-	r:5,
-	xSpeed: Math.random()-0.5, // between 0 && 1
-	ySpeed: -1,	//should be 1 / -1 
-	update: function(){
+	update(){
 		if(!game.pause){
 			this.x += this.xSpeed * game.gameSpeed;
 			this.y -= this.ySpeed * game.gameSpeed;
 			if(this.x + this.r + this.xSpeed >= canvas.width){	//right wall
 				this.xSpeed = -Math.abs(this.xSpeed);
 			}
-
 			if(this.x - this.r + this.xSpeed <= 0){	//left wall
 				this.xSpeed = Math.abs(this.xSpeed);
 			}
-
-			if(this.y - this.r <= 0 - this.ySpeed){	//if ball is above
+			if(this.y - this.r <= 0 - this.ySpeed){	//if ball is game space
 				this.y = 1 + this.r;
-				if(game.mode == 'arcanoid'){			//arcanoid
+				this.ySpeed = -this.ySpeed;
+				if(game.mode == 'arcanoid'){
 					game.rebounds += 1;
-					this.ySpeed = -this.ySpeed;
 				}
-				else{									//pong
-					player.score += 1;
+				else{
+				//player.score += 1;
 					let log = document.createElement('p');
 					log.innerText = `Lower player scored point`;
 					mainWindow.appendChild(log);
-					this.ySpeed = -this.ySpeed;
 					this.y = canvas.height/2 - this.r/2;
 				}
 			}
-			//losing
+				//losing (below)
 			if(this.y > canvas.height){
 				this.y = canvas.height/2 + this.r;
-				this.ySpeed = -ball.ySpeed;
+				this.ySpeed = -this.ySpeed;
 				game.rebounds = 0;
-
 				if(game.mode === 'pong'){
-					player2.score += 1;
+					//player2.score += 1;
 					let log = document.createElement('p');
 					log.innerText = `Upper player scored point`;
 					mainWindow.appendChild(log);
 				}
 			}
 		}
-	},
-	lookForPlayerRebounce: function(player){
-		if(ball.y + ball.r >= player.y && ball.y - ball.r <= player.y + player.height && ball.x + ball.r + 2 >= player.x && ball.x - ball.r - 2 <= player.x+player.width){
-			ball.xSpeed = (((ball.x - player.x)-50)/player.width)*player.rebounceRatio;
-			ball.ySpeed = -ball.ySpeed;
+	};
+	lookForPlayerRebounce(player){
+		if(this.y + this.r >= player.y && this.y - this.r <= player.y + player.height && this.x + this.r + 2 >= player.x && this.x - this.r - 2 <= player.x+player.width){
+			this.xSpeed = (((this.x - player.x)-50)/player.width)*player.rebounceRatio;
+			this.y += ((this.r - this.ySpeed)* this.ySpeed);
+			this.ySpeed = -this.ySpeed;
 		}
-	},
+	};
 
-	drawBall: function(){
+	drawBall(){
 		ctx.beginPath();
 		ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI);
 		ctx.stroke();
-	}
+	};
 }
 
 class Platform{
 	constructor(x, y, width, height, color, special){
 		this.x = x;
 		this.y = y;
-		this.width = width;
-		this.height = height;
+		this.width = width || 50;
+		this.height = height || 20;
 		this.alive = true;
-		if(!this.width || !this.height){	//default values for platform
-			this.width = this.width || 50;
-			this.height = this.height || 20;
-		}
-
-		this.color = color;
+		this.color = color || fillStyleStandard;
 		this.special = special;
 		game.platforms.push(this);
 	}
@@ -209,10 +153,13 @@ class Platform{
 
 	checkBall(){
 		if(this.alive){
-			if(ball.x + ball.r + ball.xSpeed >= this.x && ball.x - ball.r - ball.xSpeed <= this.x + this.width && ball.y + ball.r + ball.ySpeed >= this.y && ball.y + ball.r + ball.ySpeed <= this.y + this.height){
-				ball.ySpeed = -ball.ySpeed;
-				this.die();
-			}
+			game.balls.forEach(ball =>{
+				if(ball.x + ball.r + ball.xSpeed >= this.x && ball.x - ball.r - ball.xSpeed <= this.x + this.width && ball.y + ball.r + ball.ySpeed >= this.y && ball.y + ball.r + ball.ySpeed <= this.y + this.height){
+					ball.ySpeed = -ball.ySpeed;
+					console.log('hit');
+					this.die();
+				}
+			});
 		}
 	}
 }
@@ -226,7 +173,13 @@ const game = {
 	rebounds:0,
 	working: null,
 	activeTexts: [{text: 'Beta', x: 210, y:100,}],
-	players:[player, player2],
+	players:[],
+	balls:[],
+	clearAllPlayers: function(){
+		while(this.players.length > 0){
+			this.players.splice(0, 1);
+		}
+	},
 
 	difficultyIncrease: function(){
 		game.gameSpeed += 1;
@@ -240,64 +193,101 @@ const game = {
 			ctx.fillText(text, x, y);
 		}
 	},
+	setControls: function(specific){
+		if(specific){
+			document.addEventListener('keydown', function(e){	//moving
+				if(e.key == specific.leftControl){
+					specific.moveLeft();
+				}
+				if(e.key == player.rightControl){
+					specific.moveRight();
+				}
+			});
+		}
+		else{
+			game.players.forEach(player =>{	//setting controls for players
+				document.addEventListener('keydown', function(e){	//moving
+					if(e.key.toLowerCase() == player.leftControl){
+						player.moveLeft();
+					}
+					if(e.key.toLowerCase() == player.rightControl){
+						player.moveRight();
+					}
+				});
+
+				document.addEventListener('keyup', function(e){	//moving
+					if(e.key.toLowerCase() == player.leftControl){
+						player.stopLeft();
+					}
+					if(e.key.toLowerCase() == player.rightControl){
+						player.stopRight();
+					}
+				});
+			});
+		}
+	},
 	//refreshing each frame
-	main: function(){	//main functions
-		ctx.clearRect(0, 0, canvas.width, canvas.height);	//clearing screen for new frame
-		this.activeTexts.forEach(arrItem =>{	//texts
+	main: function(){
+		//clearing screen
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		//texts
+		this.activeTexts.forEach(arrItem =>{
 			game.showSomeText(arrItem.text, arrItem.x, arrItem.y);
 		});
-
-		this.players.forEach(player =>{	//player collision with ball
-			ball.lookForPlayerRebounce(player);
+		//players
+		this.players.forEach(player =>{
+			this.balls.forEach(ball =>{	//collisions with each ball?
+				ball.lookForPlayerRebounce(player);
+			});
+			player.updateMove();
+			player.draw();
 		});
-
-		player.updateMove();
-		ball.drawBall();
-		ball.update();
-		player.draw();
-
-		if(this.mode == 'pong'){
-			player2.updateMove();
-			player2.draw();
-		}
-
+		//balls
+		this.balls.forEach(ball =>{
+			ball.drawBall();
+			ball.update();
+		});
+		//platforms
 		game.platforms.forEach(platform =>{
 			platform.draw();
 			platform.checkBall();
 		});
 	},
-
+	//clicking start button
 	start: function(){
-		player2.x = 50;
-		canvas.style.borderTop = 'none';
 		if(this.working){
 			clearInterval(this.working);
 		}
+
+		canvas.style.borderTop = 'none';
+
 		//setting arcanoid
 		if(game.mode == 'arcanoid'){
-			player2.x = 2000;	//for now
+			//clearing and creating just one player
+			canvas.style.borderTop = 'solid';
+			game.clearAllPlayers();
+			new Player();
+			//creating platforms
 			for(var i = 0; i < 9; i++){
 				for(var j = 0; j < 4; j++){
 					new Platform(i*55 + 5, j*25, null, null, `hsl(${i*10*j*10}, 100%, 50%)`);
 				}
 			}
 		}
-
-		document.addEventListener('keydown', player.pressKey);
-		document.addEventListener('keyup', player.upKey);
-		if(game.mode === 'pong'){
-			document.addEventListener('keydown', player2.pressKey);
-			document.addEventListener('keyup', player2.upKey);
+		else{
+			game.clearAllPlayers();
+			new Player();
+			new Player(null, 50, null, null, null, 'arrowleft', 'arrowright');
 		}
-		this.working = setInterval(function(){ //here comes the main part
-		game.main();
 
+		game.setControls();	//setting controls
+
+		this.working = setInterval(function(){ //interval for each frame
+			game.main();
 		}, 1000/game.gameFps);
 	},
-
-	stop: function(){
-		clearInterval(this.working);
-	}
 }
 
 startButton.addEventListener('click', game.start);
+
+new Ball();
