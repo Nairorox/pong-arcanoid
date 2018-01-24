@@ -1,0 +1,101 @@
+body{
+	margin:0;
+	margin-top:0;
+}
+*{
+		box-sizing: border-box;
+}
+
+.pS{
+	width:100%;
+	border:solid;
+	border-right:none;
+}
+
+.pS__left{
+	background-color: #1e90ff;
+}
+
+.pS__right{
+	background-color: #b22222;
+}
+.pS > h3{
+	margin-top:0;
+	background-color:#FF8C00;
+	box-shadow: 0px 1px 8px black;
+	padding:5px;
+}
+
+.options{
+	border:solid 1px;
+	height:30vh;
+	width:95%;
+	margin:auto;
+}
+.options__middle{
+	margin:auto;
+	padding:10px;
+	width:500px;
+	height:100%;
+	border-right:solid;
+	border-left:solid;
+}
+
+.options__middle > * {
+	margin:initial;
+	text-align:initial;
+}
+.options__main{
+	padding:10px;
+}
+
+.gameScreen{
+	border-top: none;
+	border-bottom: none;
+	display:flex;
+	width:95%;
+	height:70vh;
+	left:0;
+	right:0;
+	margin-left:auto;
+	margin-right:auto;
+}
+
+main{
+	height:100vh;
+	width:100%;
+	text-align:center;
+}
+h1{
+	margin-left:auto;
+	margin-right:auto;
+}
+canvas{
+	border:solid;
+	border-bottom:none;
+	right:0;
+	left:0;
+	width:100%;
+	height:100%;
+	margin:auto;
+}
+
+@media screen and (max-width: 680px) {
+    .pS {
+        display:none;
+    }
+    .gameScreen{
+    	width:100%;
+    }
+    .options__middle{
+    	width:100%;
+    	border:0;
+    }
+
+    h1{
+    	font-size:20px;
+    }
+    h1:after{
+    	content: " mobile version alpha";
+    }
+}

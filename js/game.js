@@ -7,13 +7,16 @@
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 const startButton = document.querySelector('.button--start');
+const pauseButton = document.querySelector('.button--pause');
 const fillStyleStandard = "#000000";
 const mainWindow = document.querySelector('main');
+const sprintingMeterLeft = document.querySelector('.sprintingMeterLeft');
+const sprintingMeterRight = document.querySelector('.sprintingMeterRight');
 
 ctx.font = "30px Arial";
 
 class Player{	//TODO: swap to class
-		constructor(x, y, height, width, rebounceRatio, leftControl, rightControl){
+		constructor(x, y, height, width, rebounceRatio, leftControl, rightControl,sprintControl, speed, meter){
 			this.x =  x || 50;
 			this.y = y || 500;
 			this.height = height || 10;
@@ -21,8 +24,14 @@ class Player{	//TODO: swap to class
 			this.movingRight = false;
 			this.movingLeft = false;
 			this.leftControl = leftControl || 'a';
+			this.sprintControl = sprintControl || 'shift';
+			this.sprinting = false;
+			this.sprintingValue = 0;
+			this.sprintingMeter = meter;
 			this.rightControl = rightControl || 'd';
 			this.rebounceRatio = rebounceRatio || 2;
+			this.initialSpeed = speed || 5;
+			this.speed = this.initialSpeed;
 			this.score = 0;
 			game.players.push(this);
 		}
@@ -31,16 +40,16 @@ class Player{	//TODO: swap to class
 		}
 		updateMove(){
 			if(this.movingLeft){
-				if(this.x >= 5){
-					this.x -= 5;
+				if(this.x >= this.speed){
+					this.x -= this.speed;
 				}
 				else{
 					this.x = 0;
 				}
 			}
 			else if(this.movingRight){
-				if(this.x + this.width <= canvas.width - 5){
-					this.x += 5;
+				if(this.x + this.width <= canvas.width - this.speed){
+					this.x += this.speed;
 				}
 				else{
 					this.x = canvas.width - this.width;
@@ -60,6 +69,34 @@ class Player{	//TODO: swap to class
 		moveLeft(){
 			this.movingLeft = true;
 		};
+		sprint(){
+			if(!this.sprinting){
+				this.speed += 5;
+				this.sprinting = true;
+			}
+		};
+		endSprint(){
+			this.speed = this.initialSpeed;
+			this.sprinting = false;
+		};
+		sprintingMechanics(){
+			if(this.sprinting){
+				if(this.sprintingValue > 0){
+					this.sprintingValue -= 0.01;
+				}
+				else{
+					this.endSprint();
+				}
+			}
+			else{
+				if(this.sprintingValue < 2){
+					this.sprintingValue += 0.01;
+				}
+			}
+			if(this.sprintingMeter){
+				this.sprintingMeter.value = this.sprintingValue;
+			}
+		};
 }
 
 class Ball{
@@ -72,40 +109,38 @@ class Ball{
 		game.balls.push(this);
 	}
 	update(){
-		if(!game.pause){
-			this.x += this.xSpeed * game.gameSpeed;
-			this.y -= this.ySpeed * game.gameSpeed;
-			if(this.x + this.r + this.xSpeed >= canvas.width){	//right wall
-				this.xSpeed = -Math.abs(this.xSpeed);
+		this.x += this.xSpeed * game.gameSpeed;
+		this.y -= this.ySpeed * game.gameSpeed;
+		if(this.x + this.r + this.xSpeed >= canvas.width){	//right wall
+			this.xSpeed = -Math.abs(this.xSpeed);
+		}
+		if(this.x - this.r + this.xSpeed <= 0){	//left wall
+			this.xSpeed = Math.abs(this.xSpeed);
+		}
+		if(this.y - this.r <= 0 - this.ySpeed){	//if ball is game space
+			this.y = 1 + this.r;
+			this.ySpeed = -this.ySpeed;
+			if(game.activeMode == 'arcanoid'){
+				game.rebounds += 1;
 			}
-			if(this.x - this.r + this.xSpeed <= 0){	//left wall
-				this.xSpeed = Math.abs(this.xSpeed);
+			else{
+			//player.score += 1;
+				let log = document.createElement('p');
+				log.innerText = `Lower player scored point`;
+				mainWindow.appendChild(log);
+				this.y = canvas.height/2 - this.r/2;
 			}
-			if(this.y - this.r <= 0 - this.ySpeed){	//if ball is game space
-				this.y = 1 + this.r;
-				this.ySpeed = -this.ySpeed;
-				if(game.mode == 'arcanoid'){
-					game.rebounds += 1;
-				}
-				else{
-				//player.score += 1;
-					let log = document.createElement('p');
-					log.innerText = `Lower player scored point`;
-					mainWindow.appendChild(log);
-					this.y = canvas.height/2 - this.r/2;
-				}
-			}
-				//losing (below)
-			if(this.y > canvas.height){
-				this.y = canvas.height/2 + this.r;
-				this.ySpeed = -this.ySpeed;
-				game.rebounds = 0;
-				if(game.mode === 'pong'){
-					//player2.score += 1;
-					let log = document.createElement('p');
-					log.innerText = `Upper player scored point`;
-					mainWindow.appendChild(log);
-				}
+		}
+			//losing (below)
+		if(this.y > canvas.height){
+			this.y = canvas.height/2 + this.r;
+			this.ySpeed = -this.ySpeed;
+			game.rebounds = 0;
+			if(game.activeMode === 'pong'){
+				//player2.score += 1;
+				let log = document.createElement('p');
+				log.innerText = `Upper player scored point`;
+				mainWindow.appendChild(log);
 			}
 		}
 	};
@@ -149,6 +184,10 @@ class Platform{
 	die(){
 		this.alive = false;
 		delete this;
+
+		if(game.platforms.length == 0){
+			game.activeTexts.push({text: 'Winner', x: 100, y: 200})
+		}
 	}
 
 	checkBall(){
@@ -156,7 +195,6 @@ class Platform{
 			game.balls.forEach(ball =>{
 				if(ball.x + ball.r + ball.xSpeed >= this.x && ball.x - ball.r - ball.xSpeed <= this.x + this.width && ball.y + ball.r + ball.ySpeed >= this.y && ball.y + ball.r + ball.ySpeed <= this.y + this.height){
 					ball.ySpeed = -ball.ySpeed;
-					console.log('hit');
 					this.die();
 				}
 			});
@@ -169,7 +207,8 @@ const game = {
 	gameSpeed: 5,
 	pause:false,
 	platforms:[],
-	mode:'pong',
+	modes:['pong', 'arcanoid'],
+	activeMode:'pong',
 	rebounds:0,
 	working: null,
 	activeTexts: [{text: 'Beta', x: 210, y:100,}],
@@ -179,6 +218,9 @@ const game = {
 		while(this.players.length > 0){
 			this.players.splice(0, 1);
 		}
+	},
+	createMainPlayer: function(){
+		new Player(null, null, null, null, null, null, null, null, null, sprintingMeterLeft);
 	},
 
 	difficultyIncrease: function(){
@@ -194,17 +236,6 @@ const game = {
 		}
 	},
 	setControls: function(specific){
-		if(specific){
-			document.addEventListener('keydown', function(e){	//moving
-				if(e.key == specific.leftControl){
-					specific.moveLeft();
-				}
-				if(e.key == player.rightControl){
-					specific.moveRight();
-				}
-			});
-		}
-		else{
 			game.players.forEach(player =>{	//setting controls for players
 				document.addEventListener('keydown', function(e){	//moving
 					if(e.key.toLowerCase() == player.leftControl){
@@ -212,6 +243,9 @@ const game = {
 					}
 					if(e.key.toLowerCase() == player.rightControl){
 						player.moveRight();
+					}
+					if(e.key.toLowerCase() == player.sprintControl){
+						player.sprint();
 					}
 				});
 
@@ -222,12 +256,15 @@ const game = {
 					if(e.key.toLowerCase() == player.rightControl){
 						player.stopRight();
 					}
+					if(e.key.toLowerCase() == player.sprintControl){
+						player.endSprint();
+					}
 				});
 			});
-		}
 	},
 	//refreshing each frame
 	main: function(){
+		if(!this.pause){
 		//clearing screen
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		//texts
@@ -241,6 +278,7 @@ const game = {
 			});
 			player.updateMove();
 			player.draw();
+			player.sprintingMechanics();
 		});
 		//balls
 		this.balls.forEach(ball =>{
@@ -252,21 +290,25 @@ const game = {
 			platform.draw();
 			platform.checkBall();
 		});
-	},
+	}
+
+	},	//end of main
+
+
 	//clicking start button
 	start: function(){
 		if(this.working){
 			clearInterval(this.working);
 		}
-
+		game.pause = false;
 		canvas.style.borderTop = 'none';
 
 		//setting arcanoid
-		if(game.mode == 'arcanoid'){
+		if(game.activeMode == 'arcanoid'){
 			//clearing and creating just one player
 			canvas.style.borderTop = 'solid';
 			game.clearAllPlayers();
-			new Player();
+			game.createMainPlayer();
 			//creating platforms
 			for(var i = 0; i < 9; i++){
 				for(var j = 0; j < 4; j++){
@@ -276,18 +318,40 @@ const game = {
 		}
 		else{
 			game.clearAllPlayers();
-			new Player();
-			new Player(null, 50, null, null, null, 'arrowleft', 'arrowright');
+			game.createMainPlayer();
+			new Player(null, 50, null, null, null, 'arrowleft', 'arrowright', 'arrowup', null, sprintingMeterRight);
 		}
 
 		game.setControls();	//setting controls
+
+		//mobile controls just learning it
+
+		function mobileMoving(e){
+				e.preventDefault();
+				game.players[0].x = e.touches[0].clientX - canvas.offsetLeft + game.players[0].width/2;
+		}
+
+		canvas.addEventListener('touchstart', function(e){
+			e.preventDefault();
+
+			canvas.addEventListener('touchmove', mobileMoving);
+
+			canvas.addEventListener('touchend', function(e){
+				canvas.removeEventListener('touchmove', mobileMoving);
+			})
+
+		});
 
 		this.working = setInterval(function(){ //interval for each frame
 			game.main();
 		}, 1000/game.gameFps);
 	},
+	pause:function(){
+		game.pause = !game.pause;
+	}
 }
 
 startButton.addEventListener('click', game.start);
+pauseButton.addEventListener('click', game.pause);
 
 new Ball();

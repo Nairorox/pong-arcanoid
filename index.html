@@ -2,18 +2,44 @@
 <html>
 <head>
 	<title>Arcanoid</title>
-	<link rel="stylesheet" type="text/css" href="style.css">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8">
+	<meta name="theme-color" content="#FF8C00" />
 </head>
 <body>
 	<main>
 		<!-- <h1>Arcanoid by Damian Nowakowski</h1> -->
 		<noscript>Seems like your browser don't support Javascript</noscript>
-		<h1>Have fun</h1>
-		<canvas width = "500" height = "600">
-		</canvas><br>
-		<button class = "button--start">Start</button>
+		<h1>Arcanoid / Pong</h1>
+		<div class = "gameScreen">
+			<div class = "pS pS__left">
+				<h3>Player 1</h3>
+				Sprint: <meter class ="sprintingMeterLeft" min = "0" max = "2" value="0.01">
+			</div>
+			<canvas width = "500" height = "600">
+			</canvas><br>
+			<div class = "pS pS__right">
+				<h3 class = "label">Player 2</h3>
+				Sprint: <meter class ="sprintingMeterRight" min = "0" max = "2" value="0.01">
+			</div>
+		</div>
+		<div class = "options">
+			<div class = "options__middle">
+			<button class = "button--start">Start</button>
+			<button class = "button--pause">Pause/Unpause</button>
+			<div class = "options__main">
+				Game mode: <select class = "options--gameMode">
+				</select><br>
+				FPS:<span class="fpsText">60 </span>  <input type = "range" min="15" max = "60" step="15" value = "60" class = "options--fps"><br> 
+				</select>
+				Game speed: <input type="number" max = "20" min = "1" value = "5" class = "options--gSpeed">
+				</select>
+			</div>
+			</div>
+		</div>
 	</main>
-	<script type="text/javascript" src = "game.js"></script>
+	<script type="text/javascript" src = "js/game.js"></script>
+	<script type="text/javascript" src = "js/options.js"></script>
 </body>
 </html>
