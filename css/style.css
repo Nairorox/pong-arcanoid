@@ -91,6 +91,12 @@ canvas{
     	width:100%;
     	border:0;
     }
+     canvas{
+    	height:83.3%;
+    	width:100%;
+    	min-width: 80vw;
+    	min-height: 70vh;
+    }
 
     h1{
     	font-size:20px;

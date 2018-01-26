@@ -15,8 +15,8 @@ const sprintingMeterRight = document.querySelector('.sprintingMeterRight');
 
 ctx.font = "30px Arial";
 
-class Player{	//TODO: swap to class
-		constructor(x, y, height, width, rebounceRatio, leftControl, rightControl,sprintControl, speed, meter){
+class Player{
+		constructor(x, y, height, width, rebounceRatio, leftControl, rightControl,sprintControl, speed, meter, pushControl){
 			this.x =  x || 50;
 			this.y = y || 500;
 			this.height = height || 10;
@@ -33,6 +33,8 @@ class Player{	//TODO: swap to class
 			this.initialSpeed = speed || 5;
 			this.speed = this.initialSpeed;
 			this.score = 0;
+			this.pushControl = pushControl || 'space';
+			this.ballsFollowing = [];
 			game.players.push(this);
 		}
 		draw(){
@@ -69,6 +71,12 @@ class Player{	//TODO: swap to class
 		moveLeft(){
 			this.movingLeft = true;
 		};
+		pushAllBalls(){
+			this.ballsFollowing.forEach(ball =>{
+				ball.pushBall(this);
+				this.ballsFollowing.shift();
+			})
+		}
 		sprint(){
 			if(!this.sprinting){
 				this.speed += 5;
@@ -106,44 +114,72 @@ class Ball{
 		this.r = r || 5;
 		this.xSpeed = Math.random()-0.5; // between 0 && 1
 		this.ySpeed = -1;	//should be 1 / -1 
+		this.followedPlayer = null;
 		game.balls.push(this);
 	}
 	update(){
-		this.x += this.xSpeed * game.gameSpeed;
-		this.y -= this.ySpeed * game.gameSpeed;
-		if(this.x + this.r + this.xSpeed >= canvas.width){	//right wall
-			this.xSpeed = -Math.abs(this.xSpeed);
+		if(this.followedPlayer){
+					this.ySpeed = 0;
+					this.xSpeed = 0;
+					this.x = this.followedPlayer.x + ((this.followedPlayer.x + this.followedPlayer.width/2)/canvas.width) * this.followedPlayer.width
+					this.y = this.followedPlayer === game.players[0] ? this.followedPlayer.y -	 this.r - 1 : this.followedPlayer.y + this.r + this.followedPlayer.height + 1; //depending on followed player, ball will be at top or bottom of player
+
 		}
-		if(this.x - this.r + this.xSpeed <= 0){	//left wall
-			this.xSpeed = Math.abs(this.xSpeed);
-		}
-		if(this.y - this.r <= 0 - this.ySpeed){	//if ball is game space
-			this.y = 1 + this.r;
-			this.ySpeed = -this.ySpeed;
-			if(game.activeMode == 'arcanoid'){
-				game.rebounds += 1;
+		else{
+			//slowing ball (after push)
+			if(this.ySpeed > 1){
+				this.ySpeed -= 0.01;
 			}
-			else{
-			//player.score += 1;
-				let log = document.createElement('p');
-				log.innerText = `Lower player scored point`;
-				mainWindow.appendChild(log);
-				this.y = canvas.height/2 - this.r/2;
+			if(this.ySpeed < -1){
+				this.ySpeed += 0.01;
 			}
-		}
-			//losing (below)
-		if(this.y > canvas.height){
-			this.y = canvas.height/2 + this.r;
-			this.ySpeed = -this.ySpeed;
-			game.rebounds = 0;
-			if(game.activeMode === 'pong'){
-				//player2.score += 1;
-				let log = document.createElement('p');
-				log.innerText = `Upper player scored point`;
-				mainWindow.appendChild(log);
+			this.x += this.xSpeed * game.gameSpeed;
+			this.y -= this.ySpeed * game.gameSpeed;
+			if(this.x + this.r + this.xSpeed >= canvas.width){	//right wall
+				this.xSpeed = -Math.abs(this.xSpeed);
+			}
+			if(this.x - this.r + this.xSpeed <= 0){	//left wall
+				this.xSpeed = Math.abs(this.xSpeed);
+			}
+			if(this.y - this.r <= 0 - this.ySpeed){	//top wall
+				console.log(5);
+				this.y = 1 + this.r;
+				this.ySpeed = -this.ySpeed;
+				if(game.activeMode == 'arcanoid'){
+					game.rebounds += 1;
+				}
+				else{	//pong
+				//player.score += 1;
+					this.followedPlayer = game.players[1];
+					this.followedPlayer.ballsFollowing.push(this);
+				}
+			}
+				//down wall
+			if(this.y > canvas.height){
+				this.y = canvas.height/2 + this.r;
+				this.ySpeed = -this.ySpeed;
+				game.rebounds = 0;
+				if(game.activeMode === 'pong'){
+					this.followedPlayer = game.players[0];
+					this.followedPlayer.ballsFollowing.push(this);
+					//player2.score += 1;
+				}
 			}
 		}
 	};
+	pushBall(fromPlayer){
+		this.followedPlayer = null;
+		fromPlayer === game.players[0] ? this.ySpeed = -2.5 : this.ySpeed = 2.5;	//if it's bottom player then swap direction for rebounce, ball also moves faster for a while
+	};
+	checkPlatform(platform){	//checks if ball touches platform
+		if(platform.alive){	//need fix
+				if(this.x + this.r >= platform.x && this.x - this.r <= platform.x + platform.width && this.y - this.r >= platform.y && this.y - this.r <= platform.y + platform.height){
+					this.y += game.gameSpeed;
+					this.ySpeed = -this.ySpeed;
+					platform.die();
+				}
+		}
+	}
 	lookForPlayerRebounce(player){
 		if(this.y + this.r >= player.y && this.y - this.r <= player.y + player.height && this.x + this.r + 2 >= player.x && this.x - this.r - 2 <= player.x+player.width){
 			this.xSpeed = (((this.x - player.x)-50)/player.width)*player.rebounceRatio;
@@ -189,17 +225,6 @@ class Platform{
 			game.activeTexts.push({text: 'Winner', x: 100, y: 200})
 		}
 	}
-
-	checkBall(){
-		if(this.alive){
-			game.balls.forEach(ball =>{
-				if(ball.x + ball.r + ball.xSpeed >= this.x && ball.x - ball.r - ball.xSpeed <= this.x + this.width && ball.y + ball.r + ball.ySpeed >= this.y && ball.y + ball.r + ball.ySpeed <= this.y + this.height){
-					ball.ySpeed = -ball.ySpeed;
-					this.die();
-				}
-			});
-		}
-	}
 }
 
 const game = {
@@ -220,7 +245,7 @@ const game = {
 		}
 	},
 	createMainPlayer: function(){
-		new Player(null, null, null, null, null, null, null, null, null, sprintingMeterLeft);
+		new Player(null, null, null, null, null, null, null, null, null, sprintingMeterLeft, ' ');
 	},
 
 	difficultyIncrease: function(){
@@ -246,6 +271,10 @@ const game = {
 					}
 					if(e.key.toLowerCase() == player.sprintControl){
 						player.sprint();
+					}
+					if(e.key.toLowerCase() == player.pushControl){
+						e.preventDefault();
+						player.pushAllBalls();
 					}
 				});
 
@@ -275,6 +304,9 @@ const game = {
 		this.players.forEach(player =>{
 			this.balls.forEach(ball =>{	//collisions with each ball?
 				ball.lookForPlayerRebounce(player);
+				this.platforms.forEach(platform =>{
+					ball.checkPlatform(platform);
+				});
 			});
 			player.updateMove();
 			player.draw();
@@ -288,7 +320,6 @@ const game = {
 		//platforms
 		game.platforms.forEach(platform =>{
 			platform.draw();
-			platform.checkBall();
 		});
 	}
 
@@ -300,6 +331,10 @@ const game = {
 		if(this.working){
 			clearInterval(this.working);
 		}
+		game.balls.forEach(ball =>{
+			ball.followedPlayer = null;
+			ball.pushBall();
+		})
 		game.pause = false;
 		canvas.style.borderTop = 'none';
 
@@ -312,14 +347,14 @@ const game = {
 			//creating platforms
 			for(var i = 0; i < 9; i++){
 				for(var j = 0; j < 4; j++){
-					new Platform(i*55 + 5, j*25, null, null, `hsl(${i*10*j*10}, 100%, 50%)`);
+					new Platform(i*55 + 5, j*25 + 10, null, null, `hsl(${i*10*j*10}, 100%, 50%)`);
 				}
 			}
 		}
 		else{
 			game.clearAllPlayers();
 			game.createMainPlayer();
-			new Player(null, 50, null, null, null, 'arrowleft', 'arrowright', 'arrowup', null, sprintingMeterRight);
+			new Player(null, 50, null, null, null, 'arrowleft', 'arrowright', 'arrowup', null, sprintingMeterRight, 'arrowdown');
 		}
 
 		game.setControls();	//setting controls
