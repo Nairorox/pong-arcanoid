@@ -14,14 +14,42 @@
 		<h1>Arcanoid / Pong</h1>
 		<div class = "gameScreen">
 			<div class = "pS pS__left">
-				<h3>Player 1</h3>
-				Sprint: <meter class ="sprintingMeterLeft" min = "0" max = "2" value="0.01">
+				<ul class = "player_menu">
+					<li>
+						<h3 class = "label">Player 1</h3>
+					</li>
+					<li>
+						Sprint: <meter class ="sprintingMeterLeft" min = "0" max = "2" value="0.01"></meter>
+					</li>
+					<li>
+						Powerballs left: <span class = "powershoots">0
+						</span>
+					</li>
+					<li>Score: 
+						<span class = "score">0
+						</span>
+					</li>
+				</ul>
 			</div>
 			<canvas width = "500" height = "600">
 			</canvas><br>
 			<div class = "pS pS__right">
-				<h3 class = "label">Player 2</h3>
-				Sprint: <meter class ="sprintingMeterRight" min = "0" max = "2" value="0.01">
+				<ul class = "player_menu">
+					<li>
+						<h3 class = "label">Player 2</h3>
+					</li>
+					<li>
+						Sprint: <meter class ="sprintingMeterRight" min = "0" max = "2" value="0.01"></meter>
+					</li>
+					<li>
+						Powerballs left: <span class = "powershoots">0
+						</span>
+					</li>
+					<li>
+						Score: <span class = "score">0
+						</span>
+					</li>
+				</ul>
 			</div>
 		</div>
 		<div class = "options">

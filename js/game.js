@@ -12,11 +12,13 @@ const fillStyleStandard = "#000000";
 const mainWindow = document.querySelector('main');
 const sprintingMeterLeft = document.querySelector('.sprintingMeterLeft');
 const sprintingMeterRight = document.querySelector('.sprintingMeterRight');
+const powershotsDOM = document.querySelectorAll('.powershoots');
+const scoreDOM = document.querySelectorAll('.score');
 
 ctx.font = "30px Arial";
 
 class Player{
-		constructor(x, y, height, width, rebounceRatio, leftControl, rightControl,sprintControl, speed, meter, pushControl){
+		constructor(x, y, height, width, rebounceRatio, leftControl, rightControl,sprintControl, speed, meter, pushControl, psDisplay, scoreDisplay){
 			this.x =  x || 50;
 			this.y = y || 500;
 			this.height = height || 10;
@@ -32,9 +34,13 @@ class Player{
 			this.rebounceRatio = rebounceRatio || 2;
 			this.initialSpeed = speed || 5;
 			this.speed = this.initialSpeed;
-			this.score = 0;
-			this.pushControl = pushControl || 'space';
 			this.ballsFollowing = [];
+			this.pushControl = pushControl || 'space';
+			this.pushControlPressed = false;
+			this.psDisplay = psDisplay;
+			this.powershots = 3;
+			this.score = 0;
+			this.scoreDisplay = scoreDisplay;
 			game.players.push(this);
 		}
 		draw(){
@@ -71,12 +77,19 @@ class Player{
 		moveLeft(){
 			this.movingLeft = true;
 		};
+		pushControlPress(){
+			this.pushControlPressed = true;
+		};
+		pushControlRelease(){
+			this.pushControlPressed = false;
+		};
 		pushAllBalls(){
 			this.ballsFollowing.forEach(ball =>{
 				ball.pushBall(this);
 				this.ballsFollowing.shift();
 			})
-		}
+		};
+
 		sprint(){
 			if(!this.sprinting){
 				this.speed += 5;
@@ -110,7 +123,7 @@ class Player{
 class Ball{
 	constructor(x, y, r){
 		this.x = x || Math.floor(Math.random()*canvas.width-5)+5;
-		this.y = y || 100;
+		this.y = y || canvas.height/2;
 		this.r = r || 5;
 		this.xSpeed = Math.random()-0.5; // between 0 && 1
 		this.ySpeed = -1;	//should be 1 / -1 
@@ -123,7 +136,6 @@ class Ball{
 					this.xSpeed = 0;
 					this.x = this.followedPlayer.x + ((this.followedPlayer.x + this.followedPlayer.width/2)/canvas.width) * this.followedPlayer.width
 					this.y = this.followedPlayer === game.players[0] ? this.followedPlayer.y -	 this.r - 1 : this.followedPlayer.y + this.r + this.followedPlayer.height + 1; //depending on followed player, ball will be at top or bottom of player
-
 		}
 		else{
 			//slowing ball (after push)
@@ -141,7 +153,7 @@ class Ball{
 			if(this.x - this.r + this.xSpeed <= 0){	//left wall
 				this.xSpeed = Math.abs(this.xSpeed);
 			}
-			if(this.y - this.r <= 0 - this.ySpeed){	//top wall
+			if(this.y - this.r <= 0 - this.ySpeed){	//top wall (bottom player score, upper lose)
 				console.log(5);
 				this.y = 1 + this.r;
 				this.ySpeed = -this.ySpeed;
@@ -152,29 +164,44 @@ class Ball{
 				//player.score += 1;
 					this.followedPlayer = game.players[1];
 					this.followedPlayer.ballsFollowing.push(this);
+					game.players[0].score += 1;
+					game.resetPS();
+					game.updateAfterPoint();
 				}
 			}
 				//down wall
 			if(this.y > canvas.height){
-				this.y = canvas.height/2 + this.r;
 				this.ySpeed = -this.ySpeed;
 				game.rebounds = 0;
-				if(game.activeMode === 'pong'){
 					this.followedPlayer = game.players[0];
 					this.followedPlayer.ballsFollowing.push(this);
-					//player2.score += 1;
-				}
+					game.resetPS();
+
+					if(game.activeMode == "pong"){
+						game.players[1].score += 1;
+						game.updateAfterPoint();
+					}
 			}
 		}
 	};
 	pushBall(fromPlayer){
+		if(!this.followedPlayer && fromPlayer){	//standard power ball
+			if(fromPlayer.powershots < 0){
+				return;
+			}
+			fromPlayer.powershots--;
+			game.updateAfterPoint();
+		}
+		if(this.followedPlayer){	//powerball direction after lost point
+			this.xSpeed = (((this.x - fromPlayer.x)-50)/fromPlayer.width)*fromPlayer.rebounceRatio;
+		}
 		this.followedPlayer = null;
-		fromPlayer === game.players[0] ? this.ySpeed = -2.5 : this.ySpeed = 2.5;	//if it's bottom player then swap direction for rebounce, ball also moves faster for a while
+		this.ySpeed += fromPlayer === game.players[1] ? -1.5 :  1.5;	//if it's bottom player then swap direction for rebounce, ball also moves faster for a while
 	};
 	checkPlatform(platform){	//checks if ball touches platform
 		if(platform.alive){	//need fix
 				if(this.x + this.r >= platform.x && this.x - this.r <= platform.x + platform.width && this.y - this.r >= platform.y && this.y - this.r <= platform.y + platform.height){
-					this.y += game.gameSpeed;
+					//this.y += game.gameSpeed;
 					this.ySpeed = -this.ySpeed;
 					platform.die();
 				}
@@ -185,6 +212,9 @@ class Ball{
 			this.xSpeed = (((this.x - player.x)-50)/player.width)*player.rebounceRatio;
 			this.y += ((this.r - this.ySpeed)* this.ySpeed);
 			this.ySpeed = -this.ySpeed;
+			if(player.pushControlPressed){
+				this.pushBall(player)
+			}
 		}
 	};
 
@@ -218,6 +248,8 @@ class Platform{
 	}
 
 	die(){
+		game.platforms.splice(game.platforms.indexOf(this), 1);
+
 		this.alive = false;
 		delete this;
 
@@ -236,6 +268,7 @@ const game = {
 	activeMode:'pong',
 	rebounds:0,
 	working: null,
+	basicBotOn: false,
 	activeTexts: [{text: 'Beta', x: 210, y:100,}],
 	players:[],
 	balls:[],
@@ -245,7 +278,7 @@ const game = {
 		}
 	},
 	createMainPlayer: function(){
-		new Player(null, null, null, null, null, null, null, null, null, sprintingMeterLeft, ' ');
+		new Player(null, null, null, null, null, null, null, null, null, sprintingMeterLeft, ' ', powershotsDOM[0], scoreDOM[0]);
 	},
 
 	difficultyIncrease: function(){
@@ -275,6 +308,7 @@ const game = {
 					if(e.key.toLowerCase() == player.pushControl){
 						e.preventDefault();
 						player.pushAllBalls();
+						player.pushControlPress();
 					}
 				});
 
@@ -288,7 +322,24 @@ const game = {
 					if(e.key.toLowerCase() == player.sprintControl){
 						player.endSprint();
 					}
+					if(e.key.toLowerCase() == player.pushControl){
+						player.pushControlRelease();
+					}
 				});
+			});
+	},
+
+	updateAfterPoint: function(){
+		this.players.forEach(player =>{
+			player.psDisplay.innerText = player.powershots;
+			player.scoreDisplay.innerText = player.score;
+		});
+	},
+
+	resetPS: function(){
+			this.players.forEach(player =>{
+				player.powershots = 3;
+				this.updateAfterPoint();
 			});
 	},
 	//refreshing each frame
@@ -323,6 +374,12 @@ const game = {
 		});
 	}
 
+	if(game.basicBotOn){
+		if(game.balls[0].followedPlayer !== game.players[1] && game.players.length > 1){
+			game.players[1].x = game.balls[0].x;
+		}
+	}
+
 	},	//end of main
 
 
@@ -331,10 +388,6 @@ const game = {
 		if(this.working){
 			clearInterval(this.working);
 		}
-		game.balls.forEach(ball =>{
-			ball.followedPlayer = null;
-			ball.pushBall();
-		})
 		game.pause = false;
 		canvas.style.borderTop = 'none';
 
@@ -354,10 +407,21 @@ const game = {
 		else{
 			game.clearAllPlayers();
 			game.createMainPlayer();
-			new Player(null, 50, null, null, null, 'arrowleft', 'arrowright', 'arrowup', null, sprintingMeterRight, 'arrowdown');
+			new Player(null, 50, null, null, null, 'arrowleft', 'arrowright', 'arrowup', null, sprintingMeterRight, 'arrowdown', powershotsDOM[1], scoreDOM[1]);
 		}
 
 		game.setControls();	//setting controls
+		game.players.forEach(player => {
+			player.score = 0;
+		})
+
+		game.balls.forEach(ball =>{
+			ball.followedPlayer = null;
+			ball.pushBall();
+			ball.ySpeed = 1;	//maybe some kind of coinflip to determine who starts?
+		})
+
+		game.updateAfterPoint();
 
 		//mobile controls just learning it
 
@@ -366,14 +430,28 @@ const game = {
 				game.players[0].x = e.touches[0].clientX - canvas.offsetLeft + game.players[0].width/2;
 		}
 
+		function mobilePush(){
+			game.players.forEach(player =>{
+				player.pushAllBalls();
+			})
+		}
+
 		canvas.addEventListener('touchstart', function(e){
+			game.basicBotOn = true;
 			e.preventDefault();
 
 			canvas.addEventListener('touchmove', mobileMoving);
 
 			canvas.addEventListener('touchend', function(e){
 				canvas.removeEventListener('touchmove', mobileMoving);
-			})
+			});
+
+			canvas.addEventListener('touchstart', function(e){
+				mobilePush();
+				setTimeout(function(){
+					canvas.removeEventListener('touchstart', mobilePush);
+				}, 200);
+			});
 
 		});
 

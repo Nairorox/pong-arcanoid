@@ -17,7 +17,6 @@ gameModeSelect.addEventListener('change', function(){
 
 gSpeed.addEventListener('change', function(){
 	let curValue = Number(this.value);
-		console.log(typeof curValue);
 		if(curValue > parseInt(this.max)){
 			curValue = parseInt(this.max);
 			this.value = curValue;
