@@ -2,6 +2,7 @@ const gameModeSelect = document.querySelector('.options--gameMode');
 const fpsSelect = document.querySelector('.options--fps');
 const fpsText = document.querySelector('.fpsText');
 const gSpeed = document.querySelector('.options--gSpeed');
+const basicBot = document.querySelector('.options--basicBot');
 gameModeSelect.innerHTML = game.modes.map(mode =>{
 	return `<option>${mode}</option>`;
 });
@@ -26,4 +27,8 @@ gSpeed.addEventListener('change', function(){
 			this.value = curValue;
 		}
 		game.gameSpeed = Number(curValue);
+});
+
+basicBot.addEventListener('change', function(){
+	game.basicBotOn = this.checked;
 })

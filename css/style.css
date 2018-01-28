@@ -1,6 +1,8 @@
 body{
 	margin:0;
 	margin-top:0;
+	font-family: 'Roboto', sans-serif;
+
 }
 *{
 		box-sizing: border-box;
@@ -19,10 +21,19 @@ body{
 .pS__right{
 	background-color: #b22222;
 }
-.pS > h3{
+
+li{
+	padding:20px;
+}
+
+li:first-child{
+	padding:0;
+}
+
+li > h3{
 	margin-top:0;
 	background-color:#FF8C00;
-	box-shadow: 0px 1px 8px black;
+	box-shadow: 0px 0px 8px black;
 	padding:5px;
 }
 
@@ -30,7 +41,8 @@ body{
 	border:solid 1px;
 	height:30vh;
 	width:95%;
-	margin:auto;
+	margin-left:auto;
+	margin-right:auto;
 }
 .options__middle{
 	margin:auto;
@@ -55,10 +67,39 @@ body{
 	display:flex;
 	width:95%;
 	height:70vh;
-	left:0;
-	right:0;
 	margin-left:auto;
 	margin-right:auto;
+}
+
+.gameScreen > * {
+	flex-basis: 100%;
+	flex: 0 auto;
+}
+
+.score{
+	font-size:8vw;
+	width:40%;
+	margin:auto;
+	background-color: #FF8C00;
+	box-shadow:1px 1px 5px black;
+}
+
+.powershoots__li{
+	background-color: #FF8C00;
+}
+
+.powershoots{
+	color:black;
+	font-size:3vw;
+	border:solid;
+	border-radius: 50%;
+	width:15%;
+	background-color: red;
+	min-width: 40px;
+
+}
+
+meter{
 }
 
 main{

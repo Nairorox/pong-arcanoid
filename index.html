@@ -3,6 +3,7 @@
 <head>
 	<title>Pong / Arcanoid</title>
 	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8">
 	<meta name="theme-color" content="#FF8C00" />
@@ -18,16 +19,16 @@
 					<li>
 						<h3 class = "label">Player 1</h3>
 					</li>
+					<li> 
+						<div class = "score">0
+						</div>
+					</li>
 					<li>
 						Sprint: <meter class ="sprintingMeterLeft" min = "0" max = "2" value="0.01"></meter>
 					</li>
-					<li>
-						Powerballs left: <span class = "powershoots">0
-						</span>
-					</li>
-					<li>Score: 
-						<span class = "score">0
-						</span>
+					<li class = "powershoots__li">
+						Powerballs left: <div class = "powershoots">0
+						</div>
 					</li>
 				</ul>
 			</div>
@@ -39,15 +40,15 @@
 						<h3 class = "label">Player 2</h3>
 					</li>
 					<li>
+						<div class = "score">0
+						</div>
+					</li>
+					<li>
 						Sprint: <meter class ="sprintingMeterRight" min = "0" max = "2" value="0.01"></meter>
 					</li>
-					<li>
-						Powerballs left: <span class = "powershoots">0
-						</span>
-					</li>
-					<li>
-						Score: <span class = "score">0
-						</span>
+					<li class = "powershoots__li">
+						Powerballs left: <div class = "powershoots">0
+						</div>
 					</li>
 				</ul>
 			</div>
@@ -62,6 +63,8 @@
 				FPS:<span class="fpsText">60 </span>  <input type = "range" min="15" max = "60" step="15" value = "60" class = "options--fps"><br> 
 				</select>
 				Game speed: <input type="number" max = "20" min = "1" value = "5" class = "options--gSpeed">
+				</select><br>
+				Basic Bot: <input type="checkbox" class = "options--basicBot">
 				</select>
 			</div>
 			</div>

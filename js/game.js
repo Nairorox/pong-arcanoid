@@ -128,6 +128,7 @@ class Ball{
 		this.xSpeed = Math.random()-0.5; // between 0 && 1
 		this.ySpeed = -1;	//should be 1 / -1 
 		this.followedPlayer = null;
+		this.curColor = fillStyleStandard;
 		game.balls.push(this);
 	}
 	update(){
@@ -145,6 +146,7 @@ class Ball{
 			if(this.ySpeed < -1){
 				this.ySpeed += 0.01;
 			}
+
 			this.x += this.xSpeed * game.gameSpeed;
 			this.y -= this.ySpeed * game.gameSpeed;
 			if(this.x + this.r + this.xSpeed >= canvas.width){	//right wall
@@ -154,7 +156,6 @@ class Ball{
 				this.xSpeed = Math.abs(this.xSpeed);
 			}
 			if(this.y - this.r <= 0 - this.ySpeed){	//top wall (bottom player score, upper lose)
-				console.log(5);
 				this.y = 1 + this.r;
 				this.ySpeed = -this.ySpeed;
 				if(game.activeMode == 'arcanoid'){
@@ -183,10 +184,10 @@ class Ball{
 					}
 			}
 		}
-	};
+	};   
 	pushBall(fromPlayer){
 		if(!this.followedPlayer && fromPlayer){	//standard power ball
-			if(fromPlayer.powershots < 0){
+			if(fromPlayer.powershots < 1){
 				return;
 			}
 			fromPlayer.powershots--;
@@ -197,6 +198,7 @@ class Ball{
 		}
 		this.followedPlayer = null;
 		this.ySpeed += fromPlayer === game.players[1] ? -1.5 :  1.5;	//if it's bottom player then swap direction for rebounce, ball also moves faster for a while
+		this.curColor = "#FF0000"
 	};
 	checkPlatform(platform){	//checks if ball touches platform
 		if(platform.alive){	//need fix
@@ -212,6 +214,11 @@ class Ball{
 			this.xSpeed = (((this.x - player.x)-50)/player.width)*player.rebounceRatio;
 			this.y += ((this.r - this.ySpeed)* this.ySpeed);
 			this.ySpeed = -this.ySpeed;
+			if(game.basicBotOn && player == game.players[1]){
+				if(this.ySpeed > -3.5){
+					this.ySpeed	-= 1.15;
+				}
+			}
 			if(player.pushControlPressed){
 				this.pushBall(player)
 			}
@@ -220,8 +227,11 @@ class Ball{
 
 	drawBall(){
 		ctx.beginPath();
+		ctx.fillStyle = this.curColor
 		ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI);
 		ctx.stroke();
+		ctx.fill();
+		ctx.fillStyle = fillStyleStandard;
 	};
 }
 
@@ -427,7 +437,7 @@ const game = {
 
 		function mobileMoving(e){
 				e.preventDefault();
-				game.players[0].x = e.touches[0].clientX - canvas.offsetLeft + game.players[0].width/2;
+				game.players[0].x = (e.touches[0].clientX - canvas.offsetLeft - game.players[0].width/2) * canvas.width/canvas.offsetWidth;
 		}
 
 		function mobilePush(){
