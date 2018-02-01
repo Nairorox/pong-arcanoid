@@ -88,7 +88,12 @@ li > h3{
 	background-color: #FF8C00;
 }
 
-.powershoots{
+.powerballsContainer{
+	display:flex;
+	min-height: 6vh;
+}
+
+.powershoot{
 	color:black;
 	font-size:3vw;
 	border:solid;

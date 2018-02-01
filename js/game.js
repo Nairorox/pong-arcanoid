@@ -12,13 +12,13 @@ const fillStyleStandard = "#000000";
 const mainWindow = document.querySelector('main');
 const sprintingMeterLeft = document.querySelector('.sprintingMeterLeft');
 const sprintingMeterRight = document.querySelector('.sprintingMeterRight');
-const powershotsDOM = document.querySelectorAll('.powershoots');
 const scoreDOM = document.querySelectorAll('.score');
+const ballContainers = document.querySelectorAll('.powerballsContainer');
 
 ctx.font = "30px Arial";
 
 class Player{
-		constructor(x, y, height, width, rebounceRatio, leftControl, rightControl,sprintControl, speed, meter, pushControl, psDisplay, scoreDisplay){
+		constructor(x, y, height, width, rebounceRatio, leftControl, rightControl,sprintControl, speed, meter, pushControl, scoreDisplay, powerballsDisplay){
 			this.x =  x || 50;
 			this.y = y || 500;
 			this.height = height || 10;
@@ -37,10 +37,11 @@ class Player{
 			this.ballsFollowing = [];
 			this.pushControl = pushControl || 'space';
 			this.pushControlPressed = false;
-			this.psDisplay = psDisplay;
 			this.powershots = 3;
 			this.score = 0;
 			this.scoreDisplay = scoreDisplay;
+			this.powerballsDOM = powerballsDisplay || ballContainers[0];
+			console.log(this.powerballsDOM);
 			game.players.push(this);
 		}
 		draw(){
@@ -89,6 +90,20 @@ class Player{
 				this.ballsFollowing.shift();
 			})
 		};
+
+		updatePowerShotsDisplay(){
+			console.log(this.powerballsDOM);
+			while(this.powerballsDOM.children.length > 0){
+				this.powerballsDOM.removeChild(this.powerballsDOM.firstChild);
+			}
+			for(let i = 0; i < this.powershots; i++){
+				let powerBall = document.createElement('div');
+				powerBall.classList.add('powershoot');
+				powerBall.innerText = 'P';
+				this.powerballsDOM.appendChild(powerBall);
+			}
+			//this.powerballsDOM.innerHTML += ;
+		}
 
 		sprint(){
 			if(!this.sprinting){
@@ -191,6 +206,7 @@ class Ball{
 				return;
 			}
 			fromPlayer.powershots--;
+			fromPlayer.updatePowerShotsDisplay();
 			game.updateAfterPoint();
 		}
 		if(this.followedPlayer){	//powerball direction after lost point
@@ -288,7 +304,7 @@ const game = {
 		}
 	},
 	createMainPlayer: function(){
-		new Player(null, null, null, null, null, null, null, null, null, sprintingMeterLeft, ' ', powershotsDOM[0], scoreDOM[0]);
+		new Player(null, null, null, null, null, null, null, null, null, sprintingMeterLeft, ' ', scoreDOM[0], ballContainers[0]);
 	},
 
 	difficultyIncrease: function(){
@@ -339,10 +355,11 @@ const game = {
 			});
 	},
 
+
 	updateAfterPoint: function(){
 		this.players.forEach(player =>{
-			player.psDisplay.innerText = player.powershots;
 			player.scoreDisplay.innerText = player.score;
+			player.updatePowerShotsDisplay();
 		});
 	},
 
@@ -417,7 +434,7 @@ const game = {
 		else{
 			game.clearAllPlayers();
 			game.createMainPlayer();
-			new Player(null, 50, null, null, null, 'arrowleft', 'arrowright', 'arrowup', null, sprintingMeterRight, 'arrowdown', powershotsDOM[1], scoreDOM[1]);
+			new Player(null, 50, null, null, null, 'arrowleft', 'arrowright', 'arrowup', null, sprintingMeterRight, 'arrowdown',  scoreDOM[1], ballContainers[1]);
 		}
 
 		game.setControls();	//setting controls
