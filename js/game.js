@@ -41,7 +41,6 @@ class Player{
 			this.score = 0;
 			this.scoreDisplay = scoreDisplay;
 			this.powerballsDOM = powerballsDisplay || ballContainers[0];
-			console.log(this.powerballsDOM);
 			game.players.push(this);
 		}
 		draw(){
@@ -92,7 +91,6 @@ class Player{
 		};
 
 		updatePowerShotsDisplay(){
-			console.log(this.powerballsDOM);
 			while(this.powerballsDOM.children.length > 0){
 				this.powerballsDOM.removeChild(this.powerballsDOM.firstChild);
 			}

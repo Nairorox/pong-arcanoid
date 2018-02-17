@@ -1,17 +1,25 @@
+:root{
+	--ui-default:#FFAF33;
+}
+
+*{
+		box-sizing: border-box;
+
+}
+
 body{
 	margin:0;
 	margin-top:0;
+	padding:0;
 	font-family: 'Roboto', sans-serif;
 
-}
-*{
-		box-sizing: border-box;
 }
 
 .pS{
 	width:100%;
-	border:solid;
+	border:solid 1px;
 	border-right:none;
+		min-width:0;
 }
 
 .pS__left{
@@ -32,25 +40,23 @@ li:first-child{
 
 li > h3{
 	margin-top:0;
-	background-color:#FF8C00;
-	box-shadow: 0px 0px 8px black;
+	background-color:var(--ui-default);
+	box-shadow: 0px 1px 2px black;
 	padding:5px;
 }
 
 .options{
 	border:solid 1px;
+	border-bottom:none;
 	height:30vh;
-	width:95%;
 	margin-left:auto;
 	margin-right:auto;
 }
 .options__middle{
 	margin:auto;
-	padding:10px;
+	padding:15px;
 	width:500px;
-	height:100%;
-	border-right:solid;
-	border-left:solid;
+
 }
 
 .options__middle > * {
@@ -65,7 +71,7 @@ li > h3{
 	border-top: none;
 	border-bottom: none;
 	display:flex;
-	width:95%;
+
 	height:70vh;
 	margin-left:auto;
 	margin-right:auto;
@@ -77,21 +83,28 @@ li > h3{
 }
 
 .score{
+	box-sizing:content-box;
+	padding:15px;
 	font-size:8vw;
 	width:40%;
 	margin:auto;
-	background-color: #FF8C00;
+	background-color: var(--ui-default);
 	box-shadow:1px 1px 5px black;
 }
 
 .powershoots__li{
-	background-color: #FF8C00;
+	background-color: var(--ui-default);
 }
 
 .powerballsContainer{
 	display:flex;
 	min-height: 6vh;
 }
+
+.powerballsContainer > *{
+		margin:2px;
+}
+
 
 .powershoot{
 	color:black;
@@ -113,11 +126,13 @@ main{
 	text-align:center;
 }
 h1{
+	margin:0;
+	padding:12px;
 	margin-left:auto;
 	margin-right:auto;
 }
 canvas{
-	border:solid;
+	border:solid 1px;
 	border-bottom:none;
 	right:0;
 	left:0;
@@ -130,6 +145,11 @@ canvas{
     	list-style-type:none;
     	margin:0;
     	padding:0;
+    }
+
+    .label{
+    	padding:15px;
+    	font-size:20px;
     }
 
 @media screen and (max-width: 680px) {

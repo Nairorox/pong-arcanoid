@@ -12,12 +12,12 @@
 	<main>
 		<!-- <h1>Arcanoid by Damian Nowakowski</h1> -->
 		<noscript>Seems like your browser don't support Javascript</noscript>
-		<h1>Arcanoid / Pong</h1>
+
 		<div class = "gameScreen">
 			<div class = "pS pS__left">
 				<ul class = "player_menu">
 					<li>
-						<h3 class = "label">Player 1</h3>
+						<h3 class = "label" contenteditable >Player 1</h3>
 					</li>
 					<li> 
 						<div class = "score">0
@@ -29,12 +29,6 @@
 					<li class = "powershoots__li">
 						Powerballs left: 
 							<div class = "powerballsContainer">
-								<div class = "powershoot">P
-								</div>
-								<div class = "powershoot">P
-								</div>
-								<div class = "powershoot">P
-								</div>
 							</div>
 					</li>
 				</ul>
@@ -44,7 +38,7 @@
 			<div class = "pS pS__right">
 				<ul class = "player_menu">
 					<li>
-						<h3 class = "label">Player 2</h3>
+						<h3 class = "label" contenteditable>Player 2</h3>
 					</li>
 					<li>
 						<div class = "score">0
@@ -56,18 +50,13 @@
 					<li class = "powershoots__li">
 						Powerballs left: 
 						<div class = "powerballsContainer">
-							<div class = "powershoot">P
-							</div>
-							<div class = "powershoot">P
-							</div>
-							<div class = "powershoot">P
-							</div>
 						</div>
 					</li>
 				</ul>
 			</div>
 		</div>
 		<div class = "options">
+					<h1>Arcanoid / Pong</h1>
 			<div class = "options__middle">
 			<button class = "button--start">Start</button>
 			<button class = "button--pause">Pause/Unpause</button>
@@ -75,16 +64,11 @@
 				Game mode: <select class = "options--gameMode">
 				</select><br>
 				FPS:<span class="fpsText">60 </span>  <input type = "range" min="15" max = "60" step="15" value = "60" class = "options--fps"><br> 
-				</select>
-				Game speed: <input type="number" max = "20" min = "1" value = "5" class = "options--gSpeed">
-				</select><br>
+				Game speed: <input type="number" max = "20" min = "1" value = "5" class = "options--gSpeed"><br>
 				Basic Bot: <input type="checkbox" class = "options--basicBot">
-				</select>
 			</div>
-			</div>
-		</div>
-	</main>
 	<script type="text/javascript" src = "js/game.js"></script>
 	<script type="text/javascript" src = "js/options.js"></script>
+		</main>
 </body>
 </html>
